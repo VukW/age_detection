@@ -1,0 +1,4 @@
+**/.idea/*
+*.tar
+imdb/imdb.mat
+imdb_crop/*
