@@ -1,5 +1,8 @@
 numpy
-pytorch
+torch
+torchvision
 scikit-learn
 tqdm
 pandas
+visdom
+pillow
