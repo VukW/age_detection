@@ -6,3 +6,4 @@ tqdm
 pandas
 visdom
 pillow
+facenet-pytorch
