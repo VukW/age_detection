@@ -86,9 +86,11 @@ if __name__ == '__main__':
     # train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
 
     train_dataset = IMDBDataset('imdb_crop', transforms=transform,
-                                numbers_list=[str(100 + ic)[-2:] for ic in range(60)])
+                                numbers_list=[str(100 + ic)[-2:] for ic in range(60)],
+                                bad_images='imdb_dataset_bad_images.json')
     val_dataset = IMDBDataset('imdb_crop', transforms=transform,
-                              numbers_list=[str(100 + ic)[-2:] for ic in range(60, 100)])
+                              numbers_list=[str(100 + ic)[-2:] for ic in range(60, 100)],
+                              bad_images='imdb_dataset_bad_images.json')
     print(f"train:{len(train_dataset)}, val: {len(val_dataset)}")
 
     # model = AgeModel()

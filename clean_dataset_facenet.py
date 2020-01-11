@@ -40,7 +40,7 @@ for ic in tqdm(range(len(dataset)), position=3):
         # result[desc.desc.path] = 'ok'
         pbar_ok.update(1)
     if ic % 3000 == 0:
-        with open('cleaned_dataset.json', 'w') as fout:
+        with open('imdb_dataset_bad_images.json', 'w') as fout:
             json.dump(result, fout)
-with open('cleaned_dataset.json', 'w') as fout:
+with open('imdb_dataset_bad_images.json', 'w') as fout:
     json.dump(result, fout)

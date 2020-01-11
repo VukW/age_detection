@@ -1,3 +1,4 @@
+import json
 import os
 from dataclasses import dataclass
 
@@ -28,7 +29,7 @@ class ImageDescription:
 
 
 class IMDBDataset(Dataset):
-    def __init__(self, root, transforms, numbers_list=None):
+    def __init__(self, root, transforms, numbers_list=None, bad_images=None):
         self.root = root
         self.transforms = transforms
         # load all image files, sorting them to
@@ -36,6 +37,9 @@ class IMDBDataset(Dataset):
         self.imgs = []
         if numbers_list:
             numbers_list = [os.path.join(root, part) for part in numbers_list]
+        if isinstance(bad_images, str):
+            bad_images = self._read_bad_images_from_json(bad_images)
+        bad_images = bad_images or []
         for folder, dirs_list, files_list in os.walk(root):
             if numbers_list is not None and folder not in numbers_list:
                     continue
@@ -45,7 +49,10 @@ class IMDBDataset(Dataset):
                     continue
                 nm, rm, dob, photo_year = str(filename).split('.')[0].split('_')
                 photo_year = int(photo_year)
-                self.imgs.append(ImageDescription(folder, filename, nm, rm, dob, photo_year))
+                desc = ImageDescription(folder, filename, nm, rm, dob, photo_year)
+                if desc.path in bad_images:
+                    continue
+                self.imgs.append(desc)
 
         self.imgs = sorted(self.imgs, key=lambda img: os.path.join(img.folder, img.file_name))
 
@@ -67,3 +74,9 @@ class IMDBDataset(Dataset):
 
     def __len__(self):
         return len(self.imgs)
+
+    @staticmethod
+    def _read_bad_images_from_json(bad_images_filepath):
+        with open(bad_images_filepath, 'r') as fin:
+            bad_images = json.load(fin)  # dict filename -> blocking_reason
+            return set(bad_images)
