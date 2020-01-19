@@ -42,7 +42,7 @@ class IMDBDataset(Dataset):
         bad_images = bad_images or []
         for folder, dirs_list, files_list in os.walk(root):
             if numbers_list is not None and folder not in numbers_list:
-                    continue
+                continue
 
             for filename in files_list:
                 if not filename.endswith('.jpg'):

@@ -21,3 +21,14 @@ class VisdomLinePlotter(object):
         else:
             self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name,
                           update='append')
+
+
+class VisdomLinePrinter:
+    """Instead of sending data to visdom server, just print values. Is used in non-shell environments,
+    such as google colab / kaggle notebook"""
+
+    def __init__(self, env_name='main'):
+        self.env = env_name
+
+    def plot(self, var_name, split_name, title_name, x, y):
+        print(f"[{var_name}] [{split_name}] [{title_name}] {x} -> {y}")
