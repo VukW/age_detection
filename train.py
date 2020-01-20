@@ -5,12 +5,13 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 import torchvision
 from PIL import Image
+import os
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import random_split, DataLoader, Dataset
 import time
 
 from imdb_dataset import IMDBDataset
-from utils.visdom import VisdomLinePlotter
+from utils.visdom import VisdomLinePlotter, VisdomLinePrinter
 from models import finetuned_resnet34
 
 
@@ -69,7 +70,7 @@ if __name__ == '__main__':
     print(f"train:{len(train_dataset)}, val: {len(val_dataset)}")
 
     # model = AgeModel()
-    model = finetuned_resnet34()
+    model = finetuned_resnet34(pretrained=True)
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)

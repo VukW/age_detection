@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.hub import load_state_dict_from_url
 
 from torchvision.models import ResNet
-from torchvision.models.resnet import BasicBlock
+from torchvision.models.resnet import BasicBlock, model_urls
 
 
 class AgeModel(nn.Module):
@@ -42,8 +43,12 @@ class AgeModel(nn.Module):
 
 class FineTunedResnet(ResNet):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, pretrained=False, **kwargs):
         super().__init__(*args, **kwargs)
+        if pretrained:
+            state_dict = load_state_dict_from_url(model_urls['resnet34'],
+                                                  progress=True)
+            self.load_state_dict(state_dict)
         self.fc = nn.Linear(512, 1)
 
     def forward(self, x):
@@ -51,6 +56,6 @@ class FineTunedResnet(ResNet):
         return torch.sigmoid(x)
 
 
-def finetuned_resnet34():
-    model = FineTunedResnet(block=BasicBlock, layers=[3, 4, 6, 3])
+def finetuned_resnet34(pretrained=False):
+    model = FineTunedResnet(block=BasicBlock, layers=[3, 4, 6, 3], pretrained=pretrained)
     return model
