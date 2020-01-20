@@ -52,6 +52,8 @@ class IMDBDataset(Dataset):
                 desc = ImageDescription(folder, filename, nm, rm, dob, photo_year)
                 if desc.path in bad_images:
                     continue
+                if desc.age > 100:
+                    continue
                 self.imgs.append(desc)
 
         self.imgs = sorted(self.imgs, key=lambda img: os.path.join(img.folder, img.file_name))
