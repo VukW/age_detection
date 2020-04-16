@@ -3,45 +3,55 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 import torch.optim as optim
-import torchvision
-from PIL import Image
 import os
 from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import random_split, DataLoader, Dataset
+from torch.utils.data import DataLoader
 import time
 
 from imdb_dataset import IMDBDataset
+from utils.pytorch_wrapper import train_epoch, evaluate_loss, VerboseCallback
 from utils.visdom import VisdomLinePlotter, VisdomLinePrinter
 from models import finetuned_resnet34
 
 
-def infer_model(model, loader, device, with_target=False):
-    all_outputs = []
-    all_targets = []
-    for i, data in enumerate(loader):
-        if with_target:
-            inputs, target = data
-            target = target['age'].float().view(-1, 1)
-            all_targets.append(target)
-        else:
-            inputs = data
-        inputs = inputs.to(device)
-
-        outputs = model(inputs)
-        all_outputs.append(outputs)
-
-    if with_target:
-        return torch.cat(all_outputs), torch.cat(all_targets)
-    else:
-        return torch.cat(all_outputs)
-
-
 def save_model(model, postfix=None):
-    fname = 'age_model'
+    global STORAGE_SUB_PATH
+
+    model_path = STORAGE_SUB_PATH or '.'
+    fname = os.path.join(model_path, 'age_model')
     if postfix:
         fname += '_' + postfix
     fname += '.pth'
     torch.save(model, fname)
+
+
+def get_model(fname):
+    global STORAGE_SUB_PATH
+    model_path = STORAGE_SUB_PATH or '.'
+
+    fname = os.path.join(model_path, fname)
+    return torch.load(fname)
+
+
+class VisdomCallback(VerboseCallback):
+    def __init__(self, plotter, epoch):
+        self.plotter = plotter
+        self.epoch = epoch
+
+    def call(self, batch_number, losses):
+        self.plotter.plot(f'loss_epoch_{self.epoch + 1}', 'train', 'Batch loss',
+                          batch_number, losses[-1])
+
+
+class PrinterCallback(VerboseCallback):
+    def __init__(self, epoch, smoothing_interval=1):
+        self.plotter = plotter
+        self.epoch = epoch
+        self.smooth = smoothing_interval
+
+    def call(self, batch_number, losses):
+        smoothed_loss = np.mean(losses[-self.smooth:])
+        print(f"[{epoch + 1}, {batch_number + 1}], Loss: {smoothed_loss}")
 
 
 VERBOSE_FREQUENCY = 30
@@ -83,36 +93,33 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     scheduler = StepLR(optimizer, step_size=1, gamma=0.99)
 
-    plotter = VisdomLinePlotter(env_name='Train quality')
+    plotter = VisdomLinePrinter(env_name='Train quality')
 
-    start = time.time()
-    print('start training..')
     try:
-        for epoch in range(10):
-            losses = []
-            for i, data in enumerate(train_loader, 0):
-                inputs, target = data
-                inputs = inputs.to(device)
-                target = target['age'].float().view(-1, 1).to(device)
+        start = time.time()
+        print('start training..')
 
-                optimizer.zero_grad()
+        for epoch in range(30):
+            model.train()
+            train_epoch(model, train_loader,
 
-                outputs = model(inputs)
+                        device=device,
 
-                loss = criteria(outputs, target)
-                loss.backward()
+                        optimizer=optimizer,
+                        scheduler=scheduler,
+                        criteria=criteria,
+                        verbose_frequency=VERBOSE_FREQUENCY,
+                        verbose_callbacks=[VisdomCallback(plotter=plotter, epoch=epoch)]
+                        )
 
-                optimizer.step()
-                scheduler.step()
+            model.eval()
+            train_loss = evaluate_loss(model, train_loader, criteria, device=device)
+            val_loss = evaluate_loss(model, val_loader, criteria, device=device)
 
-                losses.append(loss.item())
-
-                if i % VERBOSE_FREQUENCY == VERBOSE_FREQUENCY - 1:
-                    print("[{}, {}], Loss: {}".format(epoch + 1, i + 1, np.mean(losses[-VERBOSE_FREQUENCY:])))
-
-                plotter.plot(f'loss_epoch_{epoch + 1}', 'train', 'Batch loss', i, losses[-1])
-            plotter.plot('loss', 'train', 'Epoch Loss', epoch + 1, np.mean(losses))
-            print(f"===[{int(time.time() - start)}] {epoch + 1}: loss {np.mean(losses)}")
+            #     plotter.plot(f'loss_epoch_{epoch + 1}', 'train', 'Batch loss', i, losses[-1])
+            plotter.plot('loss', 'train', 'Epoch Loss', epoch + 1, train_loss)
+            plotter.plot('loss', 'val', 'Epoch Loss', epoch + 1, val_loss)
+            print(f"===[{int(time.time() - start)}] {epoch + 1}: train_loss {train_loss}, val_loss {val_loss}")
             save_model(model, postfix='epoch_' + str(epoch + 1))
     finally:
         # scheduler.step(epoch)
