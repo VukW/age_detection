@@ -59,8 +59,7 @@ VERBOSE_FREQUENCY = 30
 if __name__ == '__main__':
     print("Please, start visdom with `python -m visdom.server` (default location: http://localhost:8097)")
 
-    transform = transforms.Compose([transforms.Resize((220, 220)),
-                                    transforms.ToTensor(),
+    transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     print('creating dataset..')
@@ -71,12 +70,12 @@ if __name__ == '__main__':
     # print(f"train:{train_size}, test: {test_size}")
     # train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
 
-    train_dataset = IMDBDataset('imdb_crop', transforms=transform,
+    train_dataset = IMDBDataset('imdb_crop_clean/imdb_crop', transforms=transform,
                                 numbers_list=[str(100 + ic)[-2:] for ic in range(60)],
-                                bad_images='imdb_dataset_bad_images.json')
-    val_dataset = IMDBDataset('imdb_crop', transforms=transform,
+                                preload_images=False)
+    val_dataset = IMDBDataset('imdb_crop_clean/imdb_crop', transforms=transform,
                               numbers_list=[str(100 + ic)[-2:] for ic in range(60, 100)],
-                              bad_images='imdb_dataset_bad_images.json')
+                              preload_images=False)
     print(f"train:{len(train_dataset)}, val: {len(val_dataset)}")
 
     # model = AgeModel()

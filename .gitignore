@@ -2,3 +2,6 @@
 *.tar
 imdb/imdb.mat
 imdb_crop/*
+imdb_crop_clean/*
+/imdb_crop_clean_220/
+/imdb_crop_clean_224/
