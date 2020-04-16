@@ -91,8 +91,8 @@ if __name__ == '__main__':
     val_loader = DataLoader(dataset=val_dataset, batch_size=50, shuffle=False)
 
     criteria = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-    scheduler = StepLR(optimizer, step_size=1, gamma=0.99)
+    optimizer = optim.Adam(model.parameters(), lr=0.015)
+    scheduler = StepLR(optimizer, step_size=60, gamma=0.99)
 
     plotter = VisdomLinePrinter(env_name='Train quality')
 
