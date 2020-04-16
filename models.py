@@ -55,6 +55,18 @@ class FineTunedResnet(ResNet):
         x = super().forward(x)
         return torch.sigmoid(x)
 
+    def freeze(self, n_last_unfreezed=3):
+        children = list(self.children())
+        for ic, child in enumerate(children):
+            requires_grad = ic > len(children) - n_last_unfreezed
+            for param in child.parameters():
+                param.requires_grad = requires_grad
+
+    def unfreeze(self):
+        for child in self.children():
+            for param in child.parameters():
+                param.requires_grad = True
+
 
 def finetuned_resnet34(pretrained=False):
     model = FineTunedResnet(block=BasicBlock, layers=[3, 4, 6, 3], pretrained=pretrained)

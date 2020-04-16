@@ -81,6 +81,8 @@ if __name__ == '__main__':
     # model = AgeModel()
     model = finetuned_resnet34(pretrained=True)
 
+    model.freeze(3)
+
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
 
@@ -120,6 +122,8 @@ if __name__ == '__main__':
             plotter.plot('loss', 'val', 'Epoch Loss', epoch + 1, val_loss)
             print(f"===[{int(time.time() - start)}] {epoch + 1}: train_loss {train_loss}, val_loss {val_loss}")
             save_model(model, postfix='epoch_' + str(epoch + 1))
+            if epoch == 1:
+                model.unfreeze()
     finally:
         # scheduler.step(epoch)
         print("Finished Training")
