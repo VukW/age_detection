@@ -1,9 +1,16 @@
+device = "cpu"
+
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision
 from torch.hub import load_state_dict_from_url
 
 from torchvision.models import ResNet
+from torchvision.models.detection import KeypointRCNN, keypointrcnn_resnet50_fpn
+from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 from torchvision.models.resnet import BasicBlock, model_urls
 
 
@@ -40,19 +47,29 @@ class AgeModel(nn.Module):
 #
 #     def forward(self, img, save_path=None, return_prob=False):
 #         return super().forward(img, save_path, return_prob)
+class FineTunedResnet(nn.Module):
+    def __init__(self, pretrained=False):
+        super().__init__()
+        keypoint_rcnn = keypointrcnn_resnet50_fpn(pretrained=pretrained)
+        self.backbone = keypoint_rcnn.backbone
+        self.fc = nn.Linear(64 * (49**2 + 24**2 + 12**2 + 5**2 + 2**2), 1)
+        self.head_conv0 = nn.Conv2d(256, 64, (7, 7))
+        self.head_conv1 = nn.Conv2d(256, 64, (5, 5))
+        self.head_conv2 = nn.Conv2d(256, 64, (3, 3))
+        self.head_conv3 = nn.Conv2d(256, 64, (3, 3))
+        self.head_conv_pool = nn.Conv2d(256, 64, (3, 3))
 
-class FineTunedResnet(ResNet):
+    def forward(self, x, **kwargs):
+        features = self.backbone.forward(x, **kwargs)
+        convolved_0 = self.head_conv0.forward(features[0])
+        convolved_1 = self.head_conv1.forward(features[1])
+        convolved_2 = self.head_conv2.forward(features[2])
+        convolved_3 = self.head_conv3.forward(features[3])
+        convolved_pool = self.head_conv_pool.forward(features['pool'])
 
-    def __init__(self, *args, pretrained=False, **kwargs):
-        super().__init__(*args, **kwargs)
-        if pretrained:
-            state_dict = load_state_dict_from_url(model_urls['resnet34'],
-                                                  progress=True)
-            self.load_state_dict(state_dict)
-        self.fc = nn.Linear(512, 1)
-
-    def forward(self, x):
-        x = super().forward(x)
+        flattened = [torch.flatten(v, 1)
+                     for v in [convolved_0, convolved_1, convolved_2, convolved_3, convolved_pool]]
+        x = self.fc(torch.cat(flattened, dim=1))
         return torch.sigmoid(x)
 
     def freeze(self, n_last_unfreezed=3):
@@ -68,6 +85,6 @@ class FineTunedResnet(ResNet):
                 param.requires_grad = True
 
 
-def finetuned_resnet34(pretrained=False):
-    model = FineTunedResnet(block=BasicBlock, layers=[3, 4, 6, 3], pretrained=pretrained)
+def finetuned_resnet50(pretrained=False):
+    model = FineTunedResnet(pretrained=pretrained)
     return model

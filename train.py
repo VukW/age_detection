@@ -11,7 +11,7 @@ import time
 from imdb_dataset import IMDBDataset
 from utils.pytorch_wrapper import train_epoch, evaluate_loss, VerboseCallback
 from utils.visdom import VisdomLinePlotter, VisdomLinePrinter
-from models import finetuned_resnet34
+from models import finetuned_resnet50
 
 
 def save_model(model, postfix=None):
@@ -54,13 +54,17 @@ class PrinterCallback(VerboseCallback):
         print(f"[{epoch + 1}, {batch_number + 1}], Loss: {smoothed_loss}")
 
 
-VERBOSE_FREQUENCY = 30
+VERBOSE_FREQUENCY = 2
 
 if __name__ == '__main__':
     print("Please, start visdom with `python -m visdom.server` (default location: http://localhost:8097)")
 
-    transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    train_transforms = [transforms.RandomHorizontalFlip()]
+    val_transforms = []
+    common_transforms = [transforms.ToTensor(),
+                         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    train_transforms = transforms.Compose(train_transforms + common_transforms)
+    val_transforms = transforms.Compose(val_transforms + common_transforms)
 
     print('creating dataset..')
     # dataset = IMDBDataset('imdb_crop/00', transforms=transform)
@@ -70,24 +74,24 @@ if __name__ == '__main__':
     # print(f"train:{train_size}, test: {test_size}")
     # train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
 
-    train_dataset = IMDBDataset('imdb_crop_clean/imdb_crop', transforms=transform,
+    train_dataset = IMDBDataset('imdb_crop_clean_220/imdb_crop', transforms=train_transforms,
                                 numbers_list=[str(100 + ic)[-2:] for ic in range(60)],
                                 preload_images=False)
-    val_dataset = IMDBDataset('imdb_crop_clean/imdb_crop', transforms=transform,
+    val_dataset = IMDBDataset('imdb_crop_clean_220/imdb_crop', transforms=val_transforms,
                               numbers_list=[str(100 + ic)[-2:] for ic in range(60, 100)],
                               preload_images=False)
     print(f"train:{len(train_dataset)}, val: {len(val_dataset)}")
 
     # model = AgeModel()
-    model = finetuned_resnet34(pretrained=True)
+    model = finetuned_resnet50(pretrained=True)
 
-    model.freeze(3)
+    # model.freeze(3)
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
 
     print('creating loaders..')
-    train_loader = DataLoader(dataset=train_dataset, batch_size=128, shuffle=True)
+    train_loader = DataLoader(dataset=train_dataset, batch_size=8, shuffle=True)
     val_loader = DataLoader(dataset=val_dataset, batch_size=50, shuffle=False)
 
     criteria = nn.MSELoss()
