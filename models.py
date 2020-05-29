@@ -72,15 +72,33 @@ class FineTunedResnet(nn.Module):
         x = self.fc(torch.cat(flattened, dim=1))
         return torch.sigmoid(x)
 
-    def freeze(self, n_last_unfreezed=3):
+    def flattened_children(self, depth):
         children = list(self.children())
+        flattened_children = []
+        if depth is None:
+            depth = 100000  # just big enough
+        for _ in range(depth):
+            for child in children:
+                grandchild = list(child.children())
+                if grandchild:
+                    flattened_children += grandchild
+                else:
+                    flattened_children.append(child)
+            if children == flattened_children:
+                break
+            children, flattened_children = flattened_children, []
+        return children
+
+    def freeze(self, n_last_unfreezed=3, depth=3):
+        children = self.flattened_children(depth=depth)
         for ic, child in enumerate(children):
             requires_grad = ic > len(children) - n_last_unfreezed
             for param in child.parameters():
                 param.requires_grad = requires_grad
 
-    def unfreeze(self):
-        for child in self.children():
+    def unfreeze(self, depth=3):
+        children = self.flattened_children(depth=depth)
+        for child in children:
             for param in child.parameters():
                 param.requires_grad = True
 

@@ -105,6 +105,7 @@ if __name__ == '__main__':
         print('start training..')
 
         for epoch in range(30):
+            model.freeze(epoch + 2)
             model.train()
             train_epoch(model, train_loader,
 
