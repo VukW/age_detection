@@ -39,14 +39,6 @@ class AgeModel(nn.Module):
         return x
 
 
-# class FineTunedMTCNN(MTCNN):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.
-#
-#
-#     def forward(self, img, save_path=None, return_prob=False):
-#         return super().forward(img, save_path, return_prob)
 class FineTunedResnet(nn.Module):
     def __init__(self, pretrained=False):
         super().__init__()
