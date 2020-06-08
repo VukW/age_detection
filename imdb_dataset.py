@@ -54,7 +54,7 @@ class IMDBDataset(Dataset):
                 desc = ImageDescription(folder, filename, nm, rm, dob, photo_year)
                 if desc.path in bad_images:
                     continue
-                if desc.age > 100:
+                if desc.age > 100 or desc.age < 5:
                     continue
                 self.imgs.append(desc)
 
