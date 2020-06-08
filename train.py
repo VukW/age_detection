@@ -54,6 +54,10 @@ class PrinterCallback(VerboseCallback):
         print(f"[{epoch + 1}, {batch_number + 1}], Loss: {smoothed_loss}")
 
 
+def MAPELoss(output, target):
+    return torch.mean(torch.abs(output - target) / target)
+
+
 VERBOSE_FREQUENCY = 2
 
 if __name__ == '__main__':
@@ -94,7 +98,7 @@ if __name__ == '__main__':
     train_loader = DataLoader(dataset=train_dataset, batch_size=8, shuffle=True)
     val_loader = DataLoader(dataset=val_dataset, batch_size=50, shuffle=False)
 
-    criteria = nn.MSELoss()
+    criteria = MAPELoss
     optimizer = optim.Adam(model.parameters(), lr=0.015)
     scheduler = StepLR(optimizer, step_size=60, gamma=0.99)
 
