@@ -1,3 +1,7 @@
+from config import STORAGE_SUB_PATH
+
+import os
+
 device = "cpu"
 
 from collections import OrderedDict
@@ -44,12 +48,12 @@ class FineTunedResnet(nn.Module):
         super().__init__()
         keypoint_rcnn = keypointrcnn_resnet50_fpn(pretrained=pretrained)
         self.backbone = keypoint_rcnn.backbone
-        self.fc = nn.Linear(64 * (49**2 + 24**2 + 12**2 + 5**2 + 2**2), 1)
         self.head_conv0 = nn.Conv2d(256, 64, (7, 7))
         self.head_conv1 = nn.Conv2d(256, 64, (5, 5))
         self.head_conv2 = nn.Conv2d(256, 64, (3, 3))
         self.head_conv3 = nn.Conv2d(256, 64, (3, 3))
         self.head_conv_pool = nn.Conv2d(256, 64, (3, 3))
+        self.fc = nn.Linear(64 * (50**2 + 24**2 + 12**2 + 5**2 + 2**2), 1)
 
     def forward(self, x, **kwargs):
         features = self.backbone.forward(x, **kwargs)
@@ -98,3 +102,29 @@ class FineTunedResnet(nn.Module):
 def finetuned_resnet50(pretrained=False):
     model = FineTunedResnet(pretrained=pretrained)
     return model
+
+
+def save_model(model, postfix=None):
+    fname = os.path.join(STORAGE_SUB_PATH, 'age_model')
+    if postfix:
+        fname += '_' + postfix
+    fname += '.pth'
+    torch.save(model, fname)
+
+
+def get_model(fname):
+    fname = os.path.join(STORAGE_SUB_PATH, fname)
+    return torch.load(fname)
+
+
+def save_model_state(model, postfix=None):
+    fname = os.path.join(STORAGE_SUB_PATH, 'age_model')
+    if postfix:
+        fname += '_' + postfix
+    fname += '.state'
+    torch.save(model.state_dict(), fname)
+
+
+def load_model_state(model, fname):
+    fname = os.path.join(STORAGE_SUB_PATH, fname)
+    return model.load_state_dict(torch.load(fname, map_location=torch.device(device)))

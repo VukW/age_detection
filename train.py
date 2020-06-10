@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torchvision.transforms as transforms
 import torch.optim as optim
 import os
@@ -10,27 +9,8 @@ import time
 
 from imdb_dataset import IMDBDataset
 from utils.pytorch_wrapper import train_epoch, evaluate_loss, VerboseCallback
-from utils.visdom import VisdomLinePlotter, VisdomLinePrinter
-from models import finetuned_resnet50
-
-
-def save_model(model, postfix=None):
-    global STORAGE_SUB_PATH
-
-    model_path = STORAGE_SUB_PATH or '.'
-    fname = os.path.join(model_path, 'age_model')
-    if postfix:
-        fname += '_' + postfix
-    fname += '.pth'
-    torch.save(model, fname)
-
-
-def get_model(fname):
-    global STORAGE_SUB_PATH
-    model_path = STORAGE_SUB_PATH or '.'
-
-    fname = os.path.join(model_path, fname)
-    return torch.load(fname)
+from utils.visdom import VisdomLinePrinter
+from models import finetuned_resnet50, save_model, get_model
 
 
 class VisdomCallback(VerboseCallback):
