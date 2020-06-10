@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from PIL.Image import Image
 import torch
-from torchvision.transforms import functional as F
 
 
 class VerboseCallback(ABC):
@@ -78,5 +76,4 @@ def infer(model, data_loader, device=None, with_target=False):
 
 def infer_image(model, image, device=None):
     device = device or torch.device('cpu')
-    data = image.unsqueeze(0)
-    return model(data.to(device))
+    return model(image.to(device))

@@ -2,8 +2,6 @@ from config import STORAGE_SUB_PATH
 
 import os
 
-device = "cpu"
-
 from collections import OrderedDict
 
 import torch
@@ -16,6 +14,8 @@ from torchvision.models import ResNet
 from torchvision.models.detection import KeypointRCNN, keypointrcnn_resnet50_fpn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 from torchvision.models.resnet import BasicBlock, model_urls
+
+device = torch.device("cpu")
 
 
 class AgeModel(nn.Module):
@@ -53,20 +53,25 @@ class FineTunedResnet(nn.Module):
         self.head_conv2 = nn.Conv2d(256, 64, (3, 3))
         self.head_conv3 = nn.Conv2d(256, 64, (3, 3))
         self.head_conv_pool = nn.Conv2d(256, 64, (3, 3))
-        self.fc = nn.Linear(64 * (50**2 + 24**2 + 12**2 + 5**2 + 2**2), 1)
+        self.fc = nn.Linear(64 * (50 ** 2 + 24 ** 2 + 12 ** 2 + 5 ** 2 + 2 ** 2), 1)
 
     def forward(self, x, **kwargs):
         features = self.backbone.forward(x, **kwargs)
-        convolved_0 = self.head_conv0.forward(features[0])
-        convolved_1 = self.head_conv1.forward(features[1])
-        convolved_2 = self.head_conv2.forward(features[2])
-        convolved_3 = self.head_conv3.forward(features[3])
-        convolved_pool = self.head_conv_pool.forward(features['pool'])
+        try:
+            convolved_0 = self.head_conv0.forward(features['0'])
+            convolved_1 = self.head_conv1.forward(features['1'])
+            convolved_2 = self.head_conv2.forward(features['2'])
+            convolved_3 = self.head_conv3.forward(features['3'])
+            convolved_pool = self.head_conv_pool.forward(features['pool'])
 
-        flattened = [torch.flatten(v, 1)
-                     for v in [convolved_0, convolved_1, convolved_2, convolved_3, convolved_pool]]
-        x = self.fc(torch.cat(flattened, dim=1))
-        return torch.sigmoid(x)
+            flattened = [torch.flatten(v, 1)
+                         for v in [convolved_0, convolved_1, convolved_2, convolved_3, convolved_pool]]
+            x = self.fc(torch.cat(flattened, dim=1))
+            return torch.sigmoid(x)
+        except:
+            print({k: f.shape for k, f in features.items()})
+            print(convolved_0.shape, convolved_1.shape, convolved_2.shape, convolved_3.shape, convolved_pool.shape)
+            raise
 
     def flattened_children(self, depth):
         children = list(self.children())
@@ -114,7 +119,7 @@ def save_model(model, postfix=None):
 
 def get_model(fname):
     fname = os.path.join(STORAGE_SUB_PATH, fname)
-    return torch.load(fname)
+    return torch.load(fname, map_location=device)
 
 
 def save_model_state(model, postfix=None):
@@ -127,4 +132,4 @@ def save_model_state(model, postfix=None):
 
 def load_model_state(model, fname):
     fname = os.path.join(STORAGE_SUB_PATH, fname)
-    return model.load_state_dict(torch.load(fname, map_location=torch.device(device)))
+    return model.load_state_dict(torch.load(fname, map_location=device))
