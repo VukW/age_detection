@@ -29,34 +29,6 @@
 </form>
 
 <script>
-    function base64ToBlob(base64, mime) {
-
-        mime = mime || '';
-        var sliceSize = 1024;
-        var byteChars = window.atob(base64);
-        var byteArrays = [];
-
-        for (var offset = 0, len = byteChars.length; offset < len; offset += sliceSize) {
-            var slice = byteChars.slice(offset, offset + sliceSize);
-
-            var byteNumbers = new Array(slice.length);
-            for (var i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-            }
-
-            var byteArray = new Uint8Array(byteNumbers);
-
-            byteArrays.push(byteArray);
-        }
-
-        return new Blob(byteArrays, {type: mime});
-    }
-
-    function imageBase64ToBlob(image) {
-        let imageData = image.replace(/^data:image\/(png|jpg);base64,/, "");
-        return base64ToBlob(imageData, "image/png");
-    }
-
     const webcamElement = document.getElementById('webcam');
     const canvasElement = document.getElementById('canvas');
     const webcam = new Webcam(webcamElement, 'user', canvasElement, null);
@@ -71,7 +43,6 @@
     document.querySelector('#take-snapshot').onclick = function () {
         console.log('snapshot taken')
         let image = webcam.snap();
-        // let blob = imageBase64ToBlob(image);
         let form = document.querySelector("#images-form");
         document.querySelector("input[name=\'snapshot\']").value = image;
         form.submit();
