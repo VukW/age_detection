@@ -1,8 +1,81 @@
 {% extends "base.html" %}
 {% block content %}
-        Hello {{name}}!
-        <form enctype="multipart/form-data" method="post" action="/result">
-            <p><input type="file" name="f">
-                <input type="submit" value="Отправить"></p>
-        </form>
+<script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
+
+<label>
+    Take a photo using camera
+    <video id="webcam" autoplay playsinline width="640" height="480"></video>
+    <canvas id="canvas" class="d-none"></canvas>
+    <button id="take-snapshot">Take snapshot</button>
+</label>
+<form id="images-form" enctype="multipart/form-data" method="post" action="/result">
+    <p><input type="hidden" name="snapshot">
+        <input type="file" name="f">
+        <label>
+            Or paste image url:
+            <input type="text" name="url">
+        </label>
+        <input type="submit" value="Submit image"></p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+</form>
+
+<script>
+    function base64ToBlob(base64, mime) {
+
+        mime = mime || '';
+        var sliceSize = 1024;
+        var byteChars = window.atob(base64);
+        var byteArrays = [];
+
+        for (var offset = 0, len = byteChars.length; offset < len; offset += sliceSize) {
+            var slice = byteChars.slice(offset, offset + sliceSize);
+
+            var byteNumbers = new Array(slice.length);
+            for (var i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+
+            var byteArray = new Uint8Array(byteNumbers);
+
+            byteArrays.push(byteArray);
+        }
+
+        return new Blob(byteArrays, {type: mime});
+    }
+
+    function imageBase64ToBlob(image) {
+        let imageData = image.replace(/^data:image\/(png|jpg);base64,/, "");
+        return base64ToBlob(imageData, "image/png");
+    }
+
+    const webcamElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('canvas');
+    const webcam = new Webcam(webcamElement, 'user', canvasElement, null);
+
+    webcam.start()
+        .then(result => {
+            console.log("webcam started");
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    document.querySelector('#take-snapshot').onclick = function () {
+        console.log('snapshot taken')
+        let image = webcam.snap();
+        // let blob = imageBase64ToBlob(image);
+        let form = document.querySelector("#images-form");
+        document.querySelector("input[name=\'snapshot\']").value = image;
+        form.submit();
+
+    }
+</script>
 {% endblock %}

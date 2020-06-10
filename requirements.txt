@@ -7,6 +7,7 @@ pandas
 visdom
 pillow
 facenet-pytorch
+opencv-python
 flask
 bootstrap-flask
 python-dotenv
