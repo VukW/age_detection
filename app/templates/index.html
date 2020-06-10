@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+        Hello {{name}}!
+        <form enctype="multipart/form-data" method="post" action="/result">
+            <p><input type="file" name="f">
+                <input type="submit" value="Отправить"></p>
+        </form>
+{% endblock %}

@@ -7,3 +7,6 @@ pandas
 visdom
 pillow
 facenet-pytorch
+flask
+bootstrap-flask
+python-dotenv
