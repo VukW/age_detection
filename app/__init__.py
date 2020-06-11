@@ -11,6 +11,7 @@ from models import FullModel, PredictionError
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 model = FullModel("age_model_latest.state", n_tta_transforms=3)
 
@@ -36,7 +37,7 @@ def predict():
         first_file = request.files['f']
         # if user does not select file, browser also
         # submit an empty part without filename
-        if first_file.filename != '':
+        if (first_file.filename != '') and first_file.content_type in {'image/png', 'image/jpeg'}:
             image = Image.open(first_file)
 
     if not image:

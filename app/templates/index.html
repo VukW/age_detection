@@ -10,7 +10,7 @@
                 <label for="take-snapshot">
                     Take a photo using camera
                 </label> <br>
-                <video id="webcam" autoplay playsinline width="640" height="480"></video>
+                <video id="webcam" autoplay playsinline width="480" height="360"></video>
                 <canvas id="canvas" class="d-none"></canvas>
                 <br>
                 <button id="take-snapshot" class="btn btn-primary">Take snapshot</button>
@@ -45,11 +45,11 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-<p class=flashes style="color:red;">
+<div class="alert alert-danger" role="alert">
     {% for category, message in messages %}
-<p class="{{ category }}">{{ message }}</p>
-{% endfor %}
-</p>
+    <p class="{{ category }}">{{ message }}</p>
+    {% endfor %}
+</div>
 {% endif %}
 {% endwith %}
 
