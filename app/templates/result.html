@@ -1,11 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="container bg-light text-center" style="margin-top: 3rem">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for message in messages %}
-            <img src="{{ message }}">
+            <div class="text-center" style="padding-top: 1rem">
+                <img src="{{ message }}">
+                <br>
+                Age: {{ predicted_age }}
+            </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
-    Prediction: {{ predicted_age }}
+    <a href="/" class="btn btn-primary" > Back </a>
+</div>
 {% endblock %}

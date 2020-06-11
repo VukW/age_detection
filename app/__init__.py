@@ -58,4 +58,4 @@ def predict():
     base64_content = "data: image/png; base64, " + base64.b64encode(buffered.getvalue()).decode("utf-8")
     flash(base64_content)
 
-    return render_template('result.html', predicted_age=predicted_age * 100)
+    return render_template('result.html', predicted_age=int(predicted_age * 100))
