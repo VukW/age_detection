@@ -9,7 +9,7 @@ from imdb_dataset import IMDBDataset
 from facenet_pytorch import MTCNN
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-model = MTCNN(image_size=220, margin=20, device=device, min_face_size=150, select_largest=True)
+model = MTCNN(image_size=224, margin=20, device=device, min_face_size=150, select_largest=True)
 
 bad_images_file_path = 'imdb_dataset_bad_images.json'
 

@@ -2,18 +2,10 @@ from config import STORAGE_SUB_PATH
 
 import os
 
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision
-from torch.hub import load_state_dict_from_url
-
-from torchvision.models import ResNet
-from torchvision.models.detection import KeypointRCNN, keypointrcnn_resnet50_fpn
-from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
-from torchvision.models.resnet import BasicBlock, model_urls
+from torchvision.models.detection import keypointrcnn_resnet50_fpn
 
 device = torch.device("cpu")
 
@@ -57,21 +49,16 @@ class FineTunedResnet(nn.Module):
 
     def forward(self, x, **kwargs):
         features = self.backbone.forward(x, **kwargs)
-        try:
-            convolved_0 = self.head_conv0.forward(features['0'])
-            convolved_1 = self.head_conv1.forward(features['1'])
-            convolved_2 = self.head_conv2.forward(features['2'])
-            convolved_3 = self.head_conv3.forward(features['3'])
-            convolved_pool = self.head_conv_pool.forward(features['pool'])
+        convolved_0 = self.head_conv0.forward(features['0'])
+        convolved_1 = self.head_conv1.forward(features['1'])
+        convolved_2 = self.head_conv2.forward(features['2'])
+        convolved_3 = self.head_conv3.forward(features['3'])
+        convolved_pool = self.head_conv_pool.forward(features['pool'])
 
-            flattened = [torch.flatten(v, 1)
-                         for v in [convolved_0, convolved_1, convolved_2, convolved_3, convolved_pool]]
-            x = self.fc(torch.cat(flattened, dim=1))
-            return torch.sigmoid(x)
-        except:
-            print({k: f.shape for k, f in features.items()})
-            print(convolved_0.shape, convolved_1.shape, convolved_2.shape, convolved_3.shape, convolved_pool.shape)
-            raise
+        flattened = [torch.flatten(v, 1)
+                     for v in [convolved_0, convolved_1, convolved_2, convolved_3, convolved_pool]]
+        x = self.fc(torch.cat(flattened, dim=1))
+        return torch.sigmoid(x)
 
     def flattened_children(self, depth):
         children = list(self.children())

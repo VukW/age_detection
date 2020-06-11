@@ -2,14 +2,13 @@ from io import BytesIO
 import base64
 
 import requests
-import torch
 from PIL import Image
 from facenet_pytorch.models.mtcnn import MTCNN
-from flask import Flask, request, render_template, flash, redirect, send_file
+from flask import Flask, request, render_template, flash, redirect
 from flask_bootstrap import Bootstrap
 from torchvision.transforms import transforms
 
-from models import load_model_state, finetuned_resnet50, AgeModel, device
+from models import load_model_state, finetuned_resnet50, device
 from utils.pytorch_wrapper import infer_image
 from torchvision.transforms import functional as F
 
@@ -20,9 +19,6 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 face_model = MTCNN(image_size=224, margin=20, device=device, min_face_size=150, select_largest=True)
 age_model = finetuned_resnet50(pretrained=False)
 load_model_state(age_model, "age_model_latest.state")
-print(age_model)
-# age_model = AgeModel()
-# load_model_state(age_model, "age_model_custom_epoch_30.state")
 
 common_transforms = [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 transform = transforms.Compose(common_transforms)
