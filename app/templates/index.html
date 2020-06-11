@@ -1,32 +1,57 @@
 {% extends "base.html" %}
 {% block content %}
 <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
+<h3 class="center-block text-center" style="padding-top: 1rem;">Age detection</h3>
+<div class="container bg-light">
+    <form id="images-form" enctype="multipart/form-data" method="post" action="/result">
+        <input type="hidden" name="snapshot">
+        <div class="row">
+            <div id="container-choose-camera" class="col text-center form-group">
+                <label for="take-snapshot">
+                    Take a photo using camera
+                </label> <br>
+                <video id="webcam" autoplay playsinline width="640" height="480"></video>
+                <canvas id="canvas" class="d-none"></canvas>
+                <br>
+                <button id="take-snapshot" class="btn btn-primary">Take snapshot</button>
+            </div>
+        </div>
+        <div class="row">
+            <div id="container-choose-file" class="card-body">
+                <label for="choose-file-fake"> Or choose image file... </label>
+                <br>
 
-<label>
-    Take a photo using camera
-    <video id="webcam" autoplay playsinline width="640" height="480"></video>
-    <canvas id="canvas" class="d-none"></canvas>
-    <button id="take-snapshot">Take snapshot</button>
-</label>
-<form id="images-form" enctype="multipart/form-data" method="post" action="/result">
-    <p><input type="hidden" name="snapshot">
-        <input type="file" name="f">
-        <label>
-            Or paste image url:
-            <input type="text" name="url">
-        </label>
-        <input type="submit" value="Submit image"></p>
+                <label id="choose-file-fake" class="btn btn-secondary form-control" for="choose-file">
+                    <input id="choose-file" type="file" hidden
+                           onchange="$('#upload-file-info').html(this.files[0].name)">
+                    Browse
+                </label>
+                <span class='label label-info' id="upload-file-info"></span>
+            </div>
+            <div id="container-choose-url" class="card-body">
+                <label for="choose-url">
+                    Or paste image url:
+                </label>
+                <input type="text" id="choose-url" name="url" class="form-control">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <input type="submit" value="Submit image" class="form-control btn-lg btn-primary">
+            </div>
+        </div>
+    </form>
+</div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <ul class=flashes>
-        {% for category, message in messages %}
-        <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
-</form>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<p class=flashes style="color:red;">
+    {% for category, message in messages %}
+<p class="{{ category }}">{{ message }}</p>
+{% endfor %}
+</p>
+{% endif %}
+{% endwith %}
 
 <script>
     const webcamElement = document.getElementById('webcam');
