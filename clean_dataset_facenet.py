@@ -27,7 +27,7 @@ for ic in tqdm(range(len(dataset)), position=3):
     desc = dataset.imgs[ic]
     inputs = [img]
     outpt, probs = model(inputs,
-                         save_path=os.path.join('imdb_crop_clean_220', desc.folder, desc.file_name),
+                         save_path=os.path.join('imdb_crop_clean_224', desc.folder, desc.file_name),
                          return_prob=True)
     if len(outpt) > 1:
         # That should never happen because of choosen params, but still is left for a case

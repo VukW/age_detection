@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 import torch.optim as optim
-import os
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 import time
@@ -10,7 +9,7 @@ import time
 from imdb_dataset import IMDBDataset
 from utils.pytorch_wrapper import train_epoch, evaluate_loss, VerboseCallback
 from utils.visdom import VisdomLinePrinter
-from models import finetuned_resnet50, save_model, get_model, load_model_state, FineTunedResnet
+from models import finetuned_resnet50, save_model, load_model_state
 
 
 class VisdomCallback(VerboseCallback):
@@ -51,13 +50,6 @@ if __name__ == '__main__':
     val_transforms = transforms.Compose(val_transforms + common_transforms)
 
     print('creating dataset..')
-    # dataset = IMDBDataset('imdb_crop/00', transforms=transform)
-
-    # train_size = int(len(dataset) * 0.8)
-    # test_size = len(dataset) - train_size
-    # print(f"train:{train_size}, test: {test_size}")
-    # train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
-
     train_dataset = IMDBDataset('imdb_crop_clean_224/imdb_crop', transforms=train_transforms,
                                 numbers_list=[str(100 + ic)[-2:] for ic in range(60)],
                                 preload_images=False)
@@ -66,12 +58,8 @@ if __name__ == '__main__':
                               preload_images=False)
     print(f"train:{len(train_dataset)}, val: {len(val_dataset)}")
 
-    # model = AgeModel()
     model = finetuned_resnet50(pretrained=False)
     load_model_state(model, 'age_model_latest.state')
-    # model = get_model('age_model_latest.pth')
-
-    # model.freeze(3)
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
@@ -81,7 +69,7 @@ if __name__ == '__main__':
     val_loader = DataLoader(dataset=val_dataset, batch_size=50, shuffle=False)
 
     criteria = MAPELoss
-    optimizer = optim.Adam(model.parameters(), lr=0.015)
+    optimizer = optim.Adam(model.parameters(), lr=0.0001)
     scheduler = StepLR(optimizer, step_size=60, gamma=0.99)
 
     plotter = VisdomLinePrinter(env_name='Train quality')
@@ -90,16 +78,15 @@ if __name__ == '__main__':
     train_loss = evaluate_loss(model, train_loader, criteria, device=device)
     val_loss = evaluate_loss(model, val_loader, criteria, device=device)
 
-    #     plotter.plot(f'loss_epoch_{epoch + 1}', 'train', 'Batch loss', i, losses[-1])
     print('train loss:', train_loss)
     print('val loss:', val_loss)
 
-    try:
-        start = time.time()
-        print('start training..')
+    start = time.time()
+    print('start training..')
 
+    try:
         for epoch in range(30):
-            model.freeze(epoch + 2)
+            # model.freeze(epoch + 2)
             model.train()
             train_epoch(model, train_loader,
 
