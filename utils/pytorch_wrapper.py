@@ -2,6 +2,16 @@ from abc import ABC, abstractmethod
 from typing import List
 
 import torch
+from torchvision import transforms
+
+augmentation = transforms.Compose([transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                                   transforms.ToPILImage(),
+                                   transforms.RandomHorizontalFlip(),
+                                   transforms.ColorJitter(0.02, 0.02, 0.02, 0.02),
+                                   transforms.RandomResizedCrop((224, 224), scale=(0.9, 1.0),
+                                                                ratio=(9 / 10, 10 / 9)),
+                                   transforms.ToTensor(),
+                                   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 
 class VerboseCallback(ABC):
@@ -48,32 +58,42 @@ def train_epoch(model, train_loader, optimizer, criteria,
                     callback.call(batch_number, losses)
 
 
-def evaluate_loss(model, data_loader, criteria, device=None):
-    outputs, targets = infer(model, data_loader, device=device, with_target=True)
+def evaluate_loss(model, data_loader, criteria, device=None, n_tta=0):
+    outputs, targets = infer(model, data_loader, device=device, with_target=True, n_tta=n_tta)
     loss = criteria(outputs, targets)
     return loss.item()
 
 
-def infer(model, data_loader, device=None, with_target=False):
+def infer(model, data_loader, device=None, with_target=False, n_tta=0):
     outputs = []
     targets = []
     device = device or torch.device('cpu')
-    for batch_number, data in enumerate(data_loader):
-        inputs = data
-        if with_target:
-            inputs, target = data
-            target = target['age'].float().view(-1, 1).to(device)
-            targets.append(target)
-        inputs = inputs.to(device)
+    with torch.no_grad():
+        for batch_number, data in enumerate(data_loader):
+            inputs = data
+            if with_target:
+                inputs, target = data
+                target = target['age'].float().view(-1, 1).to(device)
+                targets.append(target)
 
-        outputs.append(model(inputs))
+            batch_outputs = infer_images(model, inputs, n_tta=n_tta)
+            outputs.append(batch_outputs)
 
-        if with_target:
-            return torch.cat(outputs), torch.cat(targets)
-        else:
-            return torch.cat(outputs)
+    if with_target:
+        return torch.cat(outputs), torch.cat(targets)
+    else:
+        return torch.cat(outputs)
 
 
-def infer_image(model, image, device=None):
+def infer_images(model, images, device=None, n_tta=0):
     device = device or torch.device('cpu')
-    return model(image.to(device))
+    if len(images.shape) == 3:
+        images = images.unsqueeze(0).to(device)
+
+    prediction = model(images)
+
+    for _ in range(n_tta):
+        augmented_images = torch.cat([augmentation(img).unsqueeze(0) for img in images])
+        prediction += model(augmented_images.to(device))
+    prediction /= 1 + n_tta
+    return prediction

@@ -11,20 +11,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchvision.models.detection import keypointrcnn_resnet50_fpn
-import numpy as np
 
-from utils.pytorch_wrapper import infer_image
+from utils.pytorch_wrapper import infer_images
 
 device = torch.device("cpu")
-
-augmentation = transforms.Compose([transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                                   transforms.ToPILImage(),
-                                   transforms.RandomHorizontalFlip(),
-                                   transforms.ColorJitter(0.02, 0.02, 0.02, 0.02),
-                                   transforms.RandomResizedCrop((224, 224), scale=(0.9, 1.0),
-                                                                ratio=(9 / 10, 10 / 9)),
-                                   transforms.ToTensor(),
-                                   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 
 class AgeModel(nn.Module):
@@ -180,10 +170,10 @@ class FullModel:
 
         self.age_model = finetuned_resnet50(pretrained=False)
         load_model_state(self.age_model, age_model_state_filepath)
+        self.age_model.eval()
 
         self.n_tta_transforms = n_tta_transforms
         self.norm_transform = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        self.tta_transforms = augmentation
 
     def predict(self, image):
         if not isinstance(image, Image):
@@ -199,13 +189,8 @@ class FullModel:
         real_ratio = (box[3] - box[1]) / (box[2] - box[0])
         face_img = face_img.resize((224, int(real_ratio * 224)))
 
-        prediction = []
-        prediction.append(infer_image(self.age_model,
-                                      self.norm_transform(face).unsqueeze(0)).item())
-        for _ in range(self.n_tta_transforms):
-            prediction.append(infer_image(self.age_model,
-                                          self.tta_transforms(face).unsqueeze(0)).item())
-
-        print(prediction)
-        prediction = np.mean(prediction)
+        prediction = infer_images(self.age_model,
+                                  self.norm_transform(face).unsqueeze(0),
+                                  n_tta=self.n_tta_transforms)
+        prediction = prediction.item()
         return face_img, prediction
