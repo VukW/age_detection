@@ -1,4 +1,4 @@
-A simple demo service of recognizing user's age by photo.
+A simple demo service of recognizing user's age by photo. Live demo can be found here: https://vukw-age-detection.work/
 
 ### Model training
 
@@ -40,7 +40,8 @@ It saves model state after every epoch to the current directory. Pretrained stat
 ### Model serving
 
 Web UI uses Flask + bootstrap to upload images & predict ages. You can start an app like this:
-
+Live demo is located here: https://vukw-age-detection.work/
 ```(bash)
 env FLASK_APP=app flask run
 ```
+
