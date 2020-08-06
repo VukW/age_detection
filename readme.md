@@ -40,8 +40,9 @@ It saves model state after every epoch to the current directory. Pretrained stat
 ### Model serving
 
 Web UI uses Flask + bootstrap to upload images & predict ages. You can start an app like this:
-Live demo is located here: https://vukw-age-detection.xyz/
+
 ```(bash)
 env FLASK_APP=app flask run
 ```
 
+Live demo is located here: https://vukw-age-detection.xyz/
